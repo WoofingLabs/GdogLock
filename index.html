@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GDOG 锁仓</title>
+    <link rel="icon" type="image/png" href="https://woofinglabs.github.io/GdogToTheMoon/images/gdog_logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0068FF',
+                        secondary: '#18E5A0',
+                        accent: '#FFD700',
+                        dark: '#070808',
+                        'light-gray': '#E5E7EB'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        display: ['Changa One', 'system-ui', 'sans-serif']
+                    },
+                    animation: {
+                        'float': 'float 3s ease-in-out infinite'
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-8px)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-shadow-glow {
+                text-shadow: 0 0 10px rgba(0, 104, 255, 0.5);
+            }
+            .glow-border {
+                box-shadow: 0 0 12px rgba(24, 229, 160, 0.3);
+            }
+            .bg-grid {
+                background-image: url('data:image/svg+xml,%3Csvg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"%3E%3Ccircle cx="1" cy="1" r="1" fill="%230068FF" fill-opacity="0.1"/%3E%3C/svg%3E');
+                background-size: 20px 20px;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=Changa+One&display=swap" rel="stylesheet">
+</head>
+<body class="bg-dark text-white font-sans overflow-x-hidden">
+    <header class="fixed w-full z-50 bg-dark/90 backdrop-blur-md transition-all duration-300" id="navbar">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3 cursor-pointer hover:text-primary transition-colors">
+                <div class="w-10 h-10 rounded-full overflow-hidden">
+                    <img src="https://woofinglabs.github.io/GdogToTheMoon/images/gdog_logo.png" alt="GDOG Logo" class="w-full h-full object-cover">
+                </div>
+                <span class="font-display text-3xl text-primary text-shadow-glow">GDOG 锁仓</span>
+            </div>
+            <button id="menuToggle" class="md:hidden text-2xl text-primary">
+                <i class="fa fa-bars"></i>
+            </button>
+        </div>
+        <div id="mobileMenu" class="md:hidden bg-dark/95 absolute w-full top-full py-4 px-4 hidden">
+            <div class="flex flex-col space-y-4">
+                <a href="#lock" class="hover:text-primary transition-colors py-2 text-white">锁仓</a>
+            </div>
+        </div>
+    </header>
+
+    <section id="lock" class="min-h-screen pt-24 pb-16 bg-grid relative overflow-hidden flex items-center justify-center">
+        <div class="absolute inset-0 bg-gradient-to-b from-primary/10 to-dark pointer-events-none"></div>
+        <div class="absolute top-0 left-0 w-80 h-80 bg-primary/10 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-0 right-0 w-80 h-80 bg-secondary/10 rounded-full blur-3xl"></div>
+        <div class="container mx-auto px-4 text-center relative z-10">
+            <div class="w-48 h-48 mx-auto mb-8 animate-float">
+                <img src="https://woofinglabs.github.io/GdogToTheMoon/images/gdog_logo.png" alt="GDOG Logo" class="w-full h-full object-cover rounded-full border-4 border-secondary/50 glow-border">
+            </div>
+            <h1 class="font-display text-5xl md:text-7xl mb-6 text-primary text-shadow-glow">GDOG 锁仓</h1>
+            <p class="text-xl md:text-2xl text-light-gray max-w-3xl mx-auto mb-10">
+                锁仓你的GDOG代币，设置昵称，参与社区！
+            </p>
+            <div class="bg-dark/50 p-6 rounded-lg border border-primary/30 max-w-md mx-auto mb-8">
+                <div class="flex flex-col space-y-4">
+                    <button id="connectWalletButton" class="px-6 py-3 bg-primary text-white rounded-full font-medium hover:bg-primary/80 transition-all">连接钱包</button>
+                    <p id="networkStatus" class="text-light-gray text-sm">点击连接钱包...</p>
+                    <div class="flex items-center bg-dark/80 p-3 rounded-lg border border-primary/20">
+                        <i class="fa fa-link text-accent mr-3"></i>
+                        <span class="font-mono text-sm text-white truncate">0xBF126783D39296197D0297f44ec984132a574FdA</span>
+                        <button class="ml-3 text-light-gray hover:text-secondary transition-colors" onclick="copyContract()">
+                            <i class="fa fa-copy"></i>
+                        </button>
+                    </div>
+                    <div class="bg-dark/80 p-3 rounded-lg border border-primary/20">
+                        <p id="balanceStatus" class="text-light-gray text-sm">GT余额: 0<br>GDOG余额: 0<br>锁仓余额: 0<br>可提取余额: 0<br>用户ID: 未分配<br>昵称: 无</p>
+                    </div>
+                    <div>
+                        <label class="block text-left text-light-gray mb-2">锁仓GDOG数量（100000的倍数）</label>
+                        <div class="flex items-center space-x-2">
+                            <input type="text" id="lockAmount" placeholder="请输入GDOG数量" class="flex-1 px-4 py-2 bg-dark/80 border border-primary/20 rounded-lg text-white focus:outline-none focus:border-secondary">
+                            <button id="maxButton" class="px-4 py-2 bg-secondary text-dark rounded-lg font-medium hover:bg-secondary/80 transition-all disabled:bg-dark/50 disabled:cursor-not-allowed" disabled>最大</button>
+                        </div>
+                    </div>
+                    <div class="flex flex-col space-y-2">
+                        <button class="px-6 py-3 bg-primary text-white rounded-full font-medium hover:bg-primary/80 transition-all disabled:bg-dark/50 disabled:cursor-not-allowed" id="lockButton" disabled>锁仓GDOG</button>
+                        <button class="px-6 py-3 bg-accent text-dark rounded-full font-medium hover:bg-accent/80 transition-all disabled:bg-dark/50 disabled:cursor-not-allowed" id="withdrawButton" disabled>提取GDOG</button>
+                    </div>
+                    <div>
+                        <label class="block text-left text-light-gray mb-2">设置昵称</label>
+                        <div class="flex items-center space-x-2">
+                            <input type="text" id="nicknameInput" placeholder="请输入昵称" class="flex-1 px-4 py-2 bg-dark/80 border border-primary/20 rounded-lg text-white focus:outline-none focus:border-secondary">
+                            <button id="setNicknameButton" class="px-4 py-2 bg-secondary text-dark rounded-lg font-medium hover:bg-secondary/80 transition-all disabled:bg-dark/50 disabled:cursor-not-allowed" disabled>设置</button>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <img src="https://woofinglabs.github.io/GdogToTheMoon/images/gdog_logo.png" alt="GDOG" class="w-16 h-16 mx-auto animate-float">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-dark/95 py-12 border-t border-primary/20">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-light-gray text-sm">© 2025 GDOG. 版权所有。请谨慎投资，DYOR。</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.7.0/dist/web3.min.js"></script>
+    <script>
+        const GDOG_ADDRESS = '0xf6D9Cf57e20bA0d33372E8998A9424aa53411E04';
+        const LOCK_ADDRESS = '0xBF126783D39296197D0297f44ec984132a574FdA';
+        const MAX_APPROVAL = '115792089237316195423570985008687907853269984665640564039457584007913129639935';
+        const MULTIPLE = 100000 * 1e18;
+
+        const erc20Abi = [
+            {"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"remaining","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"success","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
+            {"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"name":"success","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
+            {"constant":false,"inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"success","type":"bool"}],"stateMutability":"nonpayable","type":"function"}
+        ];
+
+        const lockAbi = [
+            {"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"lock","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[],"name":"withdraw","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[{"internalType":"string","name":"nickname","type":"string"}],"name":"setNickname","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getLockedBalance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getWithdrawableBalance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserId","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"id","type":"uint256"}],"name":"getUserInfoById","outputs":[{"internalType":"address","name":"user","type":"address"},{"internalType":"uint256","name":"lockedBalance","type":"uint256"},{"internalType":"string","name":"nickname","type":"string"}],"stateMutability":"view","type":"function"}
+        ];
+
+        const chains = {
+            GateLayer: {
+                chainId: 10088,
+                chainName: 'Gate Layer',
+                rpcUrl: 'https://gatelayer-rpc.gatenode.cc',
+                blockExplorer: 'https://www.gatescan.org/gatelayer/',
+                nativeCurrency: { name: 'GT', symbol: 'GT', decimals: 18 }
+            }
+        };
+
+        let web3, account, gdogContract, lockContract;
+        let debounceTimeout;
+
+        async function waitForTransaction(txHash) {
+            let receipt = null;
+            const maxAttempts = 30;
+            let attempts = 0;
+            while (attempts < maxAttempts) {
+                receipt = await web3.eth.getTransactionReceipt(txHash);
+                if (receipt) {
+                    if (receipt.status) return receipt;
+                    throw new Error(`交易 ${txHash} 失败`);
+                }
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                attempts++;
+            }
+            throw new Error(`交易 ${txHash} 未在${maxAttempts}次尝试后确认`);
+        }
+
+        async function initializeWeb3() {
+            if (window.ethereum) {
+                web3 = new Web3(window.ethereum);
+                try {
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    account = (await web3.eth.getAccounts())[0];
+                    document.getElementById('connectWalletButton').innerText = `已连接: ${account.slice(0, 6)}...${account.slice(-4)}`;
+                    await switchNetwork('GateLayer');
+                    await initializeContracts();
+                    await checkBalances();
+                    document.getElementById('networkStatus').innerText = '已连接到Gate Layer (ID: 10088)';
+                } catch (error) {
+                    document.getElementById('networkStatus').innerText = '钱包连接失败: ' + (error.message || '未知错误');
+                }
+            } else {
+                document.getElementById('networkStatus').innerText = '请安装MetaMask';
+            }
+        }
+
+        async function switchNetwork(chain) {
+            const chainConfig = chains[chain];
+            try {
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: `0x${chainConfig.chainId.toString(16)}` }]
+                });
+            } catch (switchError) {
+                if (switchError.code === 4902) {
+                    await window.ethereum.request({
+                        method: 'wallet_addEthereumChain',
+                        params: [{
+                            chainId: `0x${chainConfig.chainId.toString(16)}`,
+                            chainName: chainConfig.chainName,
+                            rpcUrls: [chainConfig.rpcUrl],
+                            nativeCurrency: chainConfig.nativeCurrency,
+                            blockExplorerUrls: [chainConfig.blockExplorer]
+                        }]
+                    });
+                } else {
+                    throw switchError;
+                }
+            }
+        }
+
+        async function initializeContracts() {
+            gdogContract = new web3.eth.Contract(erc20Abi, GDOG_ADDRESS);
+            lockContract = new web3.eth.Contract(lockAbi, LOCK_ADDRESS);
+        }
+
+        async function checkBalances() {
+            if (!web3 || !account) {
+                document.getElementById('lockButton').disabled = true;
+                document.getElementById('withdrawButton').disabled = true;
+                document.getElementById('maxButton').disabled = true;
+                document.getElementById('setNicknameButton').disabled = true;
+                document.getElementById('balanceStatus').innerHTML = 'GT余额: 0<br>GDOG余额: 0<br>锁仓余额: 0<br>可提取余额: 0<br>用户ID: 未分配<br>昵称: 无';
+                return;
+            }
+            try {
+                const gtBalance = await web3.eth.getBalance(account);
+                const gdogBalance = await gdogContract.methods.balanceOf(account).call();
+                const lockedBalance = await lockContract.methods.getLockedBalance(account).call();
+                const withdrawableBalance = await lockContract.methods.getWithdrawableBalance(account).call();
+                const userId = await lockContract.methods.getUserId(account).call();
+                const userInfo = await lockContract.methods.getUserInfoById(userId).call();
+                const nickname = userInfo.nickname || '无';
+                const gtBalanceFormatted = Number(web3.utils.fromWei(gtBalance, 'ether')).toFixed(4);
+                const gdogBalanceFormatted = Number(web3.utils.fromWei(gdogBalance, 'ether')).toFixed(4);
+                const lockedBalanceFormatted = Number(web3.utils.fromWei(lockedBalance, 'ether')).toFixed(4);
+                const withdrawableBalanceFormatted = Number(web3.utils.fromWei(withdrawableBalance, 'ether')).toFixed(4);
+                document.getElementById('balanceStatus').innerHTML = `GT余额: ${gtBalanceFormatted}<br>GDOG余额: ${gdogBalanceFormatted}<br>锁仓余额: ${lockedBalanceFormatted}<br>可提取余额: ${withdrawableBalanceFormatted}<br>用户ID: ${userId || '未分配'}<br>昵称: ${nickname}`;
+                document.getElementById('maxButton').dataset.maxAmount = gdogBalanceFormatted;
+                document.getElementById('maxButton').disabled = Number(gdogBalanceFormatted) <= 0;
+                document.getElementById('setNicknameButton').disabled = Number(userId) === 0;
+                await checkButtonStatus();
+            } catch (error) {
+                document.getElementById('lockButton').disabled = true;
+                document.getElementById('withdrawButton').disabled = true;
+                document.getElementById('maxButton').disabled = true;
+                document.getElementById('setNicknameButton').disabled = true;
+                document.getElementById('balanceStatus').innerHTML = `查询失败: ${error.message}`;
+            }
+        }
+
+        async function setMaxAmount() {
+            const maxButton = document.getElementById('maxButton');
+            const lockAmountInput = document.getElementById('lockAmount');
+            if (maxButton.dataset.maxAmount && Number(maxButton.dataset.maxAmount) > 0) {
+                const maxAmount = Math.floor(Number(maxButton.dataset.maxAmount) / 100000) * 100000;
+                lockAmountInput.value = maxAmount;
+                checkButtonStatus();
+            }
+        }
+
+        async function approveToken(tokenContract, amountWei) {
+            const status = document.getElementById('networkStatus');
+            try {
+                status.innerText = '正在授权GDOG...';
+                const gasPrice = await web3.eth.getGasPrice();
+                const estimatedGas = await tokenContract.methods.approve(LOCK_ADDRESS, amountWei).estimateGas({ from: account });
+                const nativeBalance = await web3.eth.getBalance(account);
+                const gasCost = web3.utils.toBN(gasPrice).mul(web3.utils.toBN(estimatedGas));
+                if (web3.utils.toBN(nativeBalance).lt(gasCost)) {
+                    status.innerText = 'GT余额不足以支付Gas费';
+                    return false;
+                }
+                const tx = await tokenContract.methods.approve(LOCK_ADDRESS, amountWei).send({
+                    from: account,
+                    gas: web3.utils.toHex(Math.min(estimatedGas * 2, 1000000))
+                });
+                await waitForTransaction(tx.transactionHash);
+                status.innerText = 'GDOG授权成功！';
+                return true;
+            } catch (error) {
+                status.innerText = error.code === 4001 ? '用户取消授权' : `授权失败: ${error.message}`;
+                return false;
+            }
+        }
+
+        async function lockGDOG() {
+            const status = document.getElementById('networkStatus');
+            const lockButton = document.getElementById('lockButton');
+            const amount = document.getElementById('lockAmount').value.trim();
+            if (!web3 || !account) {
+                status.innerText = '请连接钱包';
+                return;
+            }
+            if (!amount || isNaN(amount) || Number(amount) <= 0) {
+                status.innerText = '请输入有效的GDOG数量';
+                return;
+            }
+            if (Number(amount) % 100000 !== 0) {
+                status.innerText = '数量必须是100000的倍数';
+                return;
+            }
+            try {
+                lockButton.disabled = true;
+                lockButton.innerHTML = '正在锁仓... <i class="fa fa-spinner fa-spin ml-2"></i>';
+                status.innerText = '检查余额和Gas费...';
+                const amountWei = web3.utils.toWei(amount, 'ether');
+                const gdogBalance = await gdogContract.methods.balanceOf(account).call();
+                if (web3.utils.toBN(gdogBalance).lt(web3.utils.toBN(amountWei))) {
+                    status.innerText = 'GDOG余额不足';
+                    return;
+                }
+                const allowance = await gdogContract.methods.allowance(account, LOCK_ADDRESS).call();
+                if (web3.utils.toBN(allowance).lt(web3.utils.toBN(amountWei))) {
+                    const approved = await approveToken(gdogContract, amountWei);
+                    if (!approved) return;
+                }
+                const gasPrice = await web3.eth.getGasPrice();
+                const estimatedGas = await lockContract.methods.lock(amountWei).estimateGas({ from: account });
+                const nativeBalance = await web3.eth.getBalance(account);
+                const gasCost = web3.utils.toBN(gasPrice).mul(web3.utils.toBN(estimatedGas));
+                if (web3.utils.toBN(nativeBalance).lt(gasCost)) {
+                    status.innerText = 'GT余额不足以支付Gas费';
+                    return;
+                }
+                const tx = await lockContract.methods.lock(amountWei).send({
+                    from: account,
+                    gas: web3.utils.toHex(Math.min(estimatedGas * 2, 3000000))
+                });
+                await waitForTransaction(tx.transactionHash);
+                status.innerText = `成功锁仓 ${amount} GDOG！`;
+                document.getElementById('lockAmount').value = '';
+                await checkBalances();
+            } catch (error) {
+                status.innerText = error.code === 4001 ? '用户取消交易' : `锁仓失败: ${error.message}`;
+            } finally {
+                lockButton.disabled = false;
+                lockButton.innerHTML = '锁仓GDOG';
+            }
+        }
+
+        async function withdrawGDOG() {
+            const status = document.getElementById('networkStatus');
+            const withdrawButton = document.getElementById('withdrawButton');
+            if (!web3 || !account) {
+                status.innerText = '请连接钱包';
+                return;
+            }
+            try {
+                withdrawButton.disabled = true;
+                withdrawButton.innerHTML = '正在提取... <i class="fa fa-spinner fa-spin ml-2"></i>';
+                status.innerText = '检查可提取余额...';
+                const withdrawableBalance = await lockContract.methods.getWithdrawableBalance(account).call();
+                if (web3.utils.toBN(withdrawableBalance).eq(web3.utils.toBN(0))) {
+                    status.innerText = '没有可提取的GDOG';
+                    return;
+                }
+                const gasPrice = await web3.eth.getGasPrice();
+                const estimatedGas = await lockContract.methods.withdraw().estimateGas({ from: account });
+                const nativeBalance = await web3.eth.getBalance(account);
+                const gasCost = web3.utils.toBN(gasPrice).mul(web3.utils.toBN(estimatedGas));
+                if (web3.utils.toBN(nativeBalance).lt(gasCost)) {
+                    status.innerText = 'GT余额不足以支付Gas费';
+                    return;
+                }
+                const tx = await lockContract.methods.withdraw().send({
+                    from: account,
+                    gas: web3.utils.toHex(Math.min(estimatedGas * 2, 3000000))
+                });
+                await waitForTransaction(tx.transactionHash);
+                status.innerText = `成功提取 ${web3.utils.fromWei(withdrawableBalance, 'ether')} GDOG！`;
+                await checkBalances();
+            } catch (error) {
+                status.innerText = error.code === 4001 ? '用户取消交易' : `提取失败: ${error.message}`;
+            } finally {
+                withdrawButton.disabled = false;
+                withdrawButton.innerHTML = '提取GDOG';
+            }
+        }
+
+        async function setNickname() {
+            const status = document.getElementById('networkStatus');
+            const setNicknameButton = document.getElementById('setNicknameButton');
+            const nickname = document.getElementById('nicknameInput').value.trim();
+            if (!web3 || !account) {
+                status.innerText = '请连接钱包';
+                return;
+            }
+            if (!nickname) {
+                status.innerText = '请输入昵称';
+                return;
+            }
+            try {
+                setNicknameButton.disabled = true;
+                setNicknameButton.innerHTML = '正在设置... <i class="fa fa-spinner fa-spin ml-2"></i>';
+                status.innerText = '正在设置昵称...';
+                const gasPrice = await web3.eth.getGasPrice();
+                const estimatedGas = await lockContract.methods.setNickname(nickname).estimateGas({ from: account });
+                const nativeBalance = await web3.eth.getBalance(account);
+                const gasCost = web3.utils.toBN(gasPrice).mul(web3.utils.toBN(estimatedGas));
+                if (web3.utils.toBN(nativeBalance).lt(gasCost)) {
+                    status.innerText = 'GT余额不足以支付Gas费';
+                    return;
+                }
+                const tx = await lockContract.methods.setNickname(nickname).send({
+                    from: account,
+                    gas: web3.utils.toHex(Math.min(estimatedGas * 2, 1000000))
+                });
+                await waitForTransaction(tx.transactionHash);
+                status.innerText = '昵称设置成功！';
+                document.getElementById('nicknameInput').value = '';
+                await checkBalances();
+            } catch (error) {
+                status.innerText = error.code === 4001 ? '用户取消交易' : `设置昵称失败: ${error.message}`;
+            } finally {
+                setNicknameButton.disabled = false;
+                setNicknameButton.innerHTML = '设置';
+            }
+        }
+
+        function copyContract() {
+            const contract = LOCK_ADDRESS;
+            navigator.clipboard.writeText(contract).then(() => {
+                const notification = document.createElement('div');
+                notification.className = 'fixed bottom-4 right-4 bg-primary text-white px-4 py-2 rounded-lg shadow-lg z-50';
+                notification.textContent = '合约地址已复制！';
+                document.body.appendChild(notification);
+                setTimeout(() => {
+                    notification.style.opacity = '0';
+                    notification.style.transition = 'opacity 0.3s';
+                    setTimeout(() => {
+                        document.body.removeChild(notification);
+                    }, 300);
+                }, 2000);
+            });
+        }
+
+        async function checkButtonStatus() {
+            if (!web3 || !account) {
+                document.getElementById('lockButton').disabled = true;
+                document.getElementById('withdrawButton').disabled = true;
+                document.getElementById('maxButton').disabled = true;
+                document.getElementById('setNicknameButton').disabled = true;
+                return;
+            }
+            const lockAmount = document.getElementById('lockAmount').value.trim();
+            const withdrawableBalance = await lockContract.methods.getWithdrawableBalance(account).call();
+            clearTimeout(debounceTimeout);
+            debounceTimeout = setTimeout(() => {
+                const isLockValid = lockAmount && !isNaN(lockAmount) && Number(lockAmount) > 0 && Number(lockAmount) % 100000 === 0;
+                document.getElementById('lockButton').disabled = !isLockValid;
+                document.getElementById('withdrawButton').disabled = web3.utils.toBN(withdrawableBalance).eq(web3.utils.toBN(0));
+            }, 300);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('connectWalletButton').addEventListener('click', initializeWeb3);
+            document.getElementById('lockButton').addEventListener('click', lockGDOG);
+            document.getElementById('withdrawButton').addEventListener('click', withdrawGDOG);
+            document.getElementById('maxButton').addEventListener('click', setMaxAmount);
+            document.getElementById('setNicknameButton').addEventListener('click', setNickname);
+            document.getElementById('lockAmount').addEventListener('input', checkButtonStatus);
+            document.getElementById('nicknameInput').addEventListener('input', checkButtonStatus);
+
+            const menuToggle = document.getElementById('menuToggle');
+            const mobileMenu = document.getElementById('mobileMenu');
+            menuToggle.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+                menuToggle.innerHTML = mobileMenu.classList.contains('hidden')
+                    ? '<i class="fa fa-bars"></i>'
+                    : '<i class="fa fa-times"></i>';
+            });
+
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    mobileMenu.classList.add('hidden');
+                    menuToggle.innerHTML = '<i class="fa fa-bars"></i>';
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+
+            const navbar = document.getElementById('navbar');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    navbar.classList.add('bg-dark/95', 'shadow-lg');
+                } else {
+                    navbar.classList.remove('bg-dark/95', 'shadow-lg');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
