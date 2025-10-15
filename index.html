@@ -71,7 +71,7 @@
         </div>
     </header>
 
-    <section id="lock" class="min-h-screen pt-24 pb-16 bg-grid relative overflow-hidden flex items-center justify-center">
+    <section id="lock" class="min-h-screen pt-24 pb-16 bg-grid relative overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-b from-primary/10 to-dark pointer-events-none"></div>
         <div class="absolute top-0 left-0 w-80 h-80 bg-primary/10 rounded-full blur-3xl"></div>
         <div class="absolute bottom-0 right-0 w-80 h-80 bg-secondary/10 rounded-full blur-3xl"></div>
@@ -83,127 +83,7 @@
             <p class="text-xl md:text-2xl text-light-gray max-w-3xl mx-auto mb-10">
                 锁仓你的GDOG代币，设置昵称，参与社区！
             </p>
-            <div class="bg-dark/50 p-6 rounded-lg border border-primary/30 max-w-md mx-auto mb-8">
-                <div class="flex flex-col space-y-4">
-                    <button id="connectWalletButton" class="px-6 py-3 bg-primary textージャ
-
-System: * The conversation was interrupted because the user did not complete their message. I will provide a complete response based on the user's request and the context provided. The user requested modifications to include lock records, withdrawal buttons for each lock, and a countdown timer for when tokens can be withdrawn, while ensuring the RPC URL is updated to `https://gatelayer-mainnet.gatenode.cc/`. The previous code was cut off mid-sentence, so I will continue from there, ensuring all requested features are implemented.
-
-### Modifications Made
-1. **Lock Records Display**:
-   - Added a section to display all lock records for the connected user, including amount, lock start time, lock end time, and a countdown timer.
-   - Each lock record includes a withdrawal button that is enabled only if the lock is withdrawable (`canWithdraw` is `true` or the lock period has ended).
-
-2. **Withdrawal Buttons**:
-   - Instead of a single withdrawal button, each lock record has its own "Withdraw" button.
-   - The button is disabled unless the lock's end time has passed or `canWithdraw` is `true`, checked via the contract's `getWithdrawableBalance` and `canWithdraw` state.
-
-3. **Countdown Timer**:
-   - Added a JavaScript function to calculate and display the remaining time until each lock's end time.
-   - The timer updates every second and shows days, hours, minutes, and seconds remaining, or "可提取" if the lock period has ended.
-
-4. **RPC Update**:
-   - Updated the RPC URL to `https://gatelayer-mainnet.gatenode.cc/` in the `chains` configuration.
-
-5. **Error Handling**:
-   - Retained the fix for the `Invalid user ID` error from the previous response, ensuring the nickname displays as "无" when `userId` is 0.
-   - Improved error handling to provide clear feedback in Chinese.
-
-6. **UI Enhancements**:
-   - Added a table to display lock records with columns for amount, start time, end time, countdown, and action (withdraw button).
-   - Kept the existing UI style (Tailwind CSS, animations, etc.) for consistency.
-   - Updated balance display to refresh after lock or withdraw actions.
-
-### Complete Code
-Below is the complete HTML and JavaScript code, incorporating all requested features, using the provided `GDOGLock` contract ABI, and ensuring compatibility with the contract at `0xBFwie
-
-```html
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GDOG 锁仓</title>
-    <link rel="icon" type="image/png" href="https://woofinglabs.github.io/GdogToTheMoon/images/gdog_logo.png">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#0068FF',
-                        secondary: '#18E5A0',
-                        accent: '#FFD700',
-                        dark: '#070808',
-                        'light-gray': '#E5E7EB'
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                        display: ['Changa One', 'system-ui', 'sans-serif']
-                    },
-                    animation: {
-                        'float': 'float 3s ease-in-out infinite'
-                    },
-                    keyframes: {
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-8px)' }
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <style type="text/tailwindcss">
-        @layer utilities {
-            .text-shadow-glow {
-                text-shadow: 0 0 10px rgba(0, 104, 255, 0.5);
-            }
-            .glow-border {
-                box-shadow: 0 0 12px rgba(24, 229, 160, 0.3);
-            }
-            .bg-grid {
-                background-image: url('data:image/svg+xml,%3Csvg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"%3E%3Ccircle cx="1" cy="1" r="1" fill="%230068FF" fill-opacity="0.1"/%3E%3C/svg%3E');
-                background-size: 20px 20px;
-            }
-        }
-    </style>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=Changa+One&display=swap" rel="stylesheet">
-</head>
-<body class="bg-dark text-white font-sans overflow-x-hidden">
-    <header class="fixed w-full z-50 bg-dark/90 backdrop-blur-md transition-all duration-300" id="navbar">
-        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-            <div class="flex items-center space-x-3 cursor-pointer hover:text-primary transition-colors">
-                <div class="w-10 h-10 rounded-full overflow-hidden">
-                    <img src="https://woofinglabs.github.io/GdogToTheMoon/images/gdog_logo.png" alt="GDOG Logo" class="w-full h-full object-cover">
-                </div>
-                <span class="font-display text-3xl text-primary text-shadow-glow">GDOG 锁仓</span>
-            </div>
-            <button id="menuToggle" class="md:hidden text-2xl text-primary">
-                <i class="fa fa-bars"></i>
-            </button>
-        </div>
-        <div id="mobileMenu" class="md:hidden bg-dark/95 absolute w-full top-full py-4 px-4 hidden">
-            <div class="flex flex-col space-y-4">
-                <a href="#lock" class="hover:text-primary transition-colors py-2 text-white">锁仓</a>
-            </div>
-        </div>
-    </header>
-
-    <section id="lock" class="min-h-screen pt-24 pb-16 bg-grid relative overflow-hidden flex items-center justify-center">
-        <div class="absolute inset-0 bg-gradient-to-b from-primary/10 to-dark pointer-events-none"></div>
-        <div class="absolute top-0 left-0 w-80 h-80 bg-primary/10 rounded-full blur-3xl"></div>
-        <div class="absolute bottom-0 right-0 w-80 h-80 bg-secondary/10 rounded-full blur-3xl"></div>
-        <div class="container mx-auto px-4 text-center relative z-10">
-            <div class="w-48 h-48 mx-auto mb-8 animate-float">
-                <img src="https://woofinglabs.github.io/GdogToTheMoon/images/gdog_logo.png" alt="GDOG Logo" class="w-full h-full object-cover rounded-full border-4 border-secondary/50 glow-border">
-            </div>
-            <h1 class="font-display text-5xl md:text-7xl mb-6 text-primary text-shadow-glow">GDOG 锁仓</h1>
-            <p class="text-xl md:text-2xl text-light-gray max-w-3xl mx-auto mb-10">
-                锁仓你的GDOG代币，设置昵称，参与社区！
-            </p>
-            <div class="bg-dark/50 p-6 rounded-lg border border-primary/30 max-w-md mx-auto mb-8">
+            <div class="bg-dark/50 p-6 rounded-lg border border-primary/30 max-w-lg mx-auto mb-8">
                 <div class="flex flex-col space-y-4">
                     <button id="connectWalletButton" class="px-6 py-3 bg-primary text-white rounded-full font-medium hover:bg-primary/80 transition-all">连接钱包</button>
                     <p id="networkStatus" class="text-light-gray text-sm">点击连接钱包...</p>
@@ -236,15 +116,15 @@ Below is the complete HTML and JavaScript code, incorporating all requested feat
                     </div>
                     <div class="mt-4">
                         <h2 class="text-xl text-primary mb-4">锁仓记录</h2>
-                        <div id="lockRecords" class="bg-dark/80 p-3 rounded-lg border border-primary/20 text-left">
+                        <div id="lockRecords" class="bg-dark/80 p-3 rounded-lg border border-primary/20 text-left overflow-x-auto">
                             <table class="w-full text-sm text-light-gray">
                                 <thead>
                                     <tr>
-                                        <th class="py-2">金额 (GDOG)</th>
-                                        <th class="py-2">开始时间</th>
-                                        <th class="py-2">结束时间</th>
-                                        <th class="py-2">倒计时</th>
-                                        <th class="py-2">操作</th>
+                                        <th class="py-2 px-4">金额 (GDOG)</th>
+                                        <th class="py-2 px-4">开始时间</th>
+                                        <th class="py-2 px-4">结束时间</th>
+                                        <th class="py-2 px-4">倒计时</th>
+                                        <th class="py-2 px-4">操作</th>
                                     </tr>
                                 </thead>
                                 <tbody id="lockRecordsBody"></tbody>
@@ -407,7 +287,7 @@ Below is the complete HTML and JavaScript code, incorporating all requested feat
                 document.getElementById('maxButton').disabled = true;
                 document.getElementById('setNicknameButton').disabled = true;
                 document.getElementById('balanceStatus').innerHTML = 'GT余额: 0<br>GDOG余额: 0<br>锁仓余额: 0<br>可提取余额: 0<br>用户ID: 未分配<br>昵称: 无';
-                document.getElementById('lockRecordsBody').innerHTML = '<tr><td colspan="5" class="py-2 text-center">无锁仓记录</td></tr>';
+                document.getElementById('lockRecordsBody').innerHTML = '<tr><td colspan="5" class="py-2 px-4 text-center">无锁仓记录</td></tr>';
                 return;
             }
             try {
@@ -435,7 +315,7 @@ Below is the complete HTML and JavaScript code, incorporating all requested feat
                 tbody.innerHTML = '';
                 const canWithdraw = await lockContract.methods.canWithdraw().call();
                 if (lockCount == 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="py-2 text-center">无锁仓记录</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="5" class="py-2 px-4 text-center">无锁仓记录</td></tr>';
                 } else {
                     for (let i = 0; i < lockCount; i++) {
                         const lockInfo = await lockContract.methods.getLockInfo(account, i).call();
@@ -447,11 +327,11 @@ Below is the complete HTML and JavaScript code, incorporating all requested feat
                         const row = document.createElement('tr');
                         row.dataset.endTime = lockInfo.lockEndTime;
                         row.innerHTML = `
-                            <td class="py-2">${amount}</td>
-                            <td class="py-2">${startTime}</td>
-                            <td class="py-2">${endTime}</td>
-                            <td class="py-2">${countdown}</td>
-                            <td class="py-2">
+                            <td class="py-2 px-4">${amount}</td>
+                            <td class="py-2 px-4">${startTime}</td>
+                            <td class="py-2 px-4">${endTime}</td>
+                            <td class="py-2 px-4">${countdown}</td>
+                            <td class="py-2 px-4">
                                 <button class="px-4 py-1 bg-accent text-dark rounded-lg font-medium hover:bg-accent/80 transition-all ${isWithdrawable ? '' : 'bg-dark/50 cursor-not-allowed'}" 
                                         ${isWithdrawable ? '' : 'disabled'} 
                                         onclick="withdrawGDOG(${i})">提取</button>
@@ -467,7 +347,7 @@ Below is the complete HTML and JavaScript code, incorporating all requested feat
                 document.getElementById('maxButton').disabled = true;
                 document.getElementById('setNicknameButton').disabled = true;
                 document.getElementById('balanceStatus').innerHTML = `GT余额: 0<br>GDOG余额: 0<br>锁仓余额: 0<br>可提取余额: 0<br>用户ID: 未分配<br>昵称: 无`;
-                document.getElementById('lockRecordsBody').innerHTML = '<tr><td colspan="5" class="py-2 text-center">无锁仓记录</td></tr>';
+                document.getElementById('lockRecordsBody').innerHTML = '<tr><td colspan="5" class="py-2 px-4 text-center">无锁仓记录</td></tr>';
                 document.getElementById('networkStatus').innerText = `查询失败: ${error.message}`;
             }
         }
@@ -571,8 +451,6 @@ Below is the complete HTML and JavaScript code, incorporating all requested feat
             }
             try {
                 withdrawButton.disabled = true;
-
-
                 withdrawButton.innerHTML = '正在提取... <i class="fa fa-spinner fa-spin ml-2"></i>';
                 status.innerText = '检查可提取余额...';
                 const lockInfo = await lockContract.methods.getLockInfo(account, lockIndex).call();
@@ -670,7 +548,7 @@ Below is the complete HTML and JavaScript code, incorporating all requested feat
                 document.getElementById('lockButton').disabled = true;
                 document.getElementById('maxButton').disabled = true;
                 document.getElementById('setNicknameButton').disabled = true;
-                document.getElementById('lockRecordsBody').innerHTML = '<tr><td colspan="5" class="py-2 text-center">无锁仓记录</td></tr>';
+                document.getElementById('lockRecordsBody').innerHTML = '<tr><td colspan="5" class="py-2 px-4 text-center">无锁仓记录</td></tr>';
                 return;
             }
             const lockAmount = document.getElementById('lockAmount').value.trim();
