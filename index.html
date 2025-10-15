@@ -247,8 +247,11 @@
                 const lockedBalance = await lockContract.methods.getLockedBalance(account).call();
                 const withdrawableBalance = await lockContract.methods.getWithdrawableBalance(account).call();
                 const userId = await lockContract.methods.getUserId(account).call();
-                const userInfo = await lockContract.methods.getUserInfoById(userId).call();
-                const nickname = userInfo.nickname || '无';
+                let nickname = '无';
+                if (userId != 0) {
+                    const userInfo = await lockContract.methods.getUserInfoById(userId).call();
+                    nickname = userInfo.nickname || '无';
+                }
                 const gtBalanceFormatted = Number(web3.utils.fromWei(gtBalance, 'ether')).toFixed(4);
                 const gdogBalanceFormatted = Number(web3.utils.fromWei(gdogBalance, 'ether')).toFixed(4);
                 const lockedBalanceFormatted = Number(web3.utils.fromWei(lockedBalance, 'ether')).toFixed(4);
@@ -256,14 +259,15 @@
                 document.getElementById('balanceStatus').innerHTML = `GT余额: ${gtBalanceFormatted}<br>GDOG余额: ${gdogBalanceFormatted}<br>锁仓余额: ${lockedBalanceFormatted}<br>可提取余额: ${withdrawableBalanceFormatted}<br>用户ID: ${userId || '未分配'}<br>昵称: ${nickname}`;
                 document.getElementById('maxButton').dataset.maxAmount = gdogBalanceFormatted;
                 document.getElementById('maxButton').disabled = Number(gdogBalanceFormatted) <= 0;
-                document.getElementById('setNicknameButton').disabled = Number(userId) === 0;
+                document.getElementById('setNicknameButton').disabled = userId == 0;
                 await checkButtonStatus();
             } catch (error) {
                 document.getElementById('lockButton').disabled = true;
                 document.getElementById('withdrawButton').disabled = true;
                 document.getElementById('maxButton').disabled = true;
                 document.getElementById('setNicknameButton').disabled = true;
-                document.getElementById('balanceStatus').innerHTML = `查询失败: ${error.message}`;
+                document.getElementById('balanceStatus').innerHTML = `GT余额: 0<br>GDOG余额: 0<br>锁仓余额: 0<br>可提取余额: 0<br>用户ID: 未分配<br>昵称: 无`;
+                document.getElementById('networkStatus').innerText = `查询失败: ${error.message}`;
             }
         }
 
@@ -463,11 +467,13 @@
             }
             const lockAmount = document.getElementById('lockAmount').value.trim();
             const withdrawableBalance = await lockContract.methods.getWithdrawableBalance(account).call();
+            const userId = await lockContract.methods.getUserId(account).call();
             clearTimeout(debounceTimeout);
             debounceTimeout = setTimeout(() => {
                 const isLockValid = lockAmount && !isNaN(lockAmount) && Number(lockAmount) > 0 && Number(lockAmount) % 100000 === 0;
                 document.getElementById('lockButton').disabled = !isLockValid;
                 document.getElementById('withdrawButton').disabled = web3.utils.toBN(withdrawableBalance).eq(web3.utils.toBN(0));
+                document.getElementById('setNicknameButton').disabled = userId == 0;
             }, 300);
         }
 
